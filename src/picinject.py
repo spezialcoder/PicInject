@@ -1,7 +1,8 @@
 #/usr/bin/python3
-import argparse, sys, os, zipfile, base64, random, imghdr, os
+# -*- coding: utf-8 -*-
+import argparse, sys, os, zipfile, base64, random, imghdr, os,webbrowser,shutil
 from colorama import Fore
-import json
+version = 0.1
 ##Exceptions
 class ObjectInitException(Exception):
     def __init__(self, reason):
@@ -21,10 +22,9 @@ class InjectorException(Exception):
 
 ##Injector
 class PicInjectObject:
-    def __init__(self, target, file=None, password=None):
+    def __init__(self, target, file=None):
         self.target = target
         self.file = file
-        self.password = password
         self.ready = False
         self.mode = None
 
@@ -61,25 +61,29 @@ class PicInjectObject:
 
     def inject(self):
         if self.ready and self.mode == 0:
+            dirname = "temp{0}".format(random.randint(0,10000))
+            os.mkdir(dirname)
             zipname = "tmp{0}.zip".format(random.randint(0,1000))
-            newZip = zipfile.ZipFile("temp/{0}".format(zipname),"w")
+            newZip = zipfile.ZipFile("{1}/{0}".format(zipname,dirname),"w")
             newZip.write(self.file)
             newZip.close()
 
-            with open("temp/"+zipname, "rb") as file:
+            with open(dirname+"/"+zipname, "rb") as file:
                 content = file.read()
                 file.close()
-            os.remove("temp/"+zipname)
+            os.remove(dirname+"/"+zipname)
             with open(self.target, "ab") as file:
-                print(content)
                 file.write(b"bstart"+base64.encodebytes(content))
                 file.close()
+            os.rmdir(dirname)
         else:
             raise InjectorException("Object not initialized or invalid mode")
 
 
     def extract(self):
         if self.ready and self.mode == 1:
+            dirname = "temp{0}".format(random.randint(0, 10000))
+            os.mkdir(dirname)
             zipname = "tmp{0}.zip".format(random.randint(0, 1000))
             with open(self.target, "rb") as file:
                 content = file.read()
@@ -87,14 +91,15 @@ class PicInjectObject:
 
             content = base64.decodebytes(content[content.find(b"bstart"):][6:])
 
-            with open("temp/"+zipname, "wb") as file:
+            with open(dirname+"/"+zipname, "wb") as file:
                 file.write(content)
                 file.close()
 
-            os.mkdir("../result")
-            newZip = zipfile.ZipFile("temp/"+zipname,"r")
-            newZip.extractall("result/")
-            os.remove("temp/"+zipname)
+            os.mkdir("PicInjectResult")
+            newZip = zipfile.ZipFile(dirname+"/"+zipname,"r")
+            newZip.extractall("PicInjectResult")
+            os.remove(dirname+"/"+zipname)
+            shutil.rmtree(dirname)
 
         else:
             raise InjectorException("Object not initialized or invalid mode")
@@ -126,33 +131,49 @@ def printToConsole(text, kind):  # Kind 0: error #Kind 1 : progress #Kind 2 : Su
 
 
 def printLogo():
-    pass
+    print("""
+    {1}
+   ▄███████▄  ▄█   ▄████████  ▄█  ███▄▄▄▄        ▄█    ▄████████  ▄████████     ███     
+  ███    ███ ███  ███    ███ ███  ███▀▀▀██▄     ███   ███    ███ ███    ███ ▀█████████▄ 
+  ███    ███ ███▌ ███    █▀  ███▌ ███   ███     ███   ███    █▀  ███    █▀     ▀███▀▀██ 
+  ███    ███ ███▌ ███        ███▌ ███   ███     ███  ▄███▄▄▄     ███            ███   ▀ 
+▀█████████▀  ███▌ ███        ███▌ ███   ███     ███ ▀▀███▀▀▀     ███            ███     
+  ███        ███  ███    █▄  ███  ███   ███     ███   ███    █▄  ███    █▄      ███     
+  ███        ███  ███    ███ ███  ███   ███     ███   ███    ███ ███    ███     ███     
+ ▄████▀      █▀   ████████▀  █▀    ▀█   █▀  █▄ ▄███   ██████████ ████████▀     ▄████▀   
+                                            ▀▀▀▀▀▀      {0}{4}                                   
+                                                                ____  _______________ 
+                                                               / __ )/ ____/_  __/   |
+                                                              / __  / __/   / / / /| |
+                                                             / /_/ / /___  / / / ___ |
+                                                            /_____/_____/ /_/ /_/  |_|
+                                                                                      
+ {1}Picinject {5}by {4}Lewin Sorg{0}
+ {3}Github: {2}https://github.com/spezialcoder/PicInject{0}                             
+""".format(Fore.RESET,Fore.RED,Fore.BLUE,Fore.GREEN,Fore.CYAN,Fore.YELLOW))
 
-
-def getActualVersion():
-    with open("../version.json", "r") as version_file:
-        try:
-            version = json.loads(version_file.readline())["version"]
-            return version
-        except:
-            printToConsole("Failed to load version.json")
-            return
-
-def checkUpdates():
-    pass
 
 ##Parser
 parser = argparse.ArgumentParser(description='Hide files in images')
-parser.add_argument('--target' ,type=str,help='The target file', required=True)
-parser.add_argument("--file", type=str, help="The file to hide")
-parser.add_argument("--inject", help="Hides a file in another file", action="store_true")
-parser.add_argument("--extract", help="Extracts a file from an injected file" ,action="store_true")
-parser.add_argument("--check", help="Checks if a file is injected", action="store_true")
-parser.add_argument("--password", type=str, help="Adds a password")
-parser.add_argument("--update", help="Update picinject")
+argumentsGroup = parser.add_argument_group('Picinject Options')
+argumentsGroup.add_argument('--target' ,type=str,help='The target file')
+argumentsGroup.add_argument("--file", type=str, help="The file to hide")
+argumentsGroup.add_argument("--inject", help="Hides a file in another file", action="store_true")
+argumentsGroup.add_argument("--extract", help="Extracts a file from an injected file" ,action="store_true")
+argumentsGroup.add_argument("--check", help="Checks if a file is injected", action="store_true")
+argumentsGroup.add_argument("--reportBug", help="Report a bug",action="store_true")
+argumentsGroup.add_argument("--version",help="Prints actual version",action="store_true")
+
 args = parser.parse_args()
 
+if args.version:
+    print("Picinject beta version {0}".format(version))
+    sys.exit(0)
 
+if not args.target and not args.reportBug:
+    parser.print_usage()
+    sys.exit(0)
+printLogo()
 if args.check:
     inj = PicInjectObject(args.target)
     try:
@@ -192,8 +213,10 @@ elif args.extract:
 
     if inj.check():
         inj.extract()
+        printToConsole("Image extracted!You can find the files in PicInjectResult",2)
     else:
         printToConsole("Target file is not injected",0)
 
-elif args.update:
-    pass
+if args.reportBug:
+    printToConsole("Opening browser",1)
+    webbrowser.open_new_tab("https://github.com/spezialcoder/PicInject/issues")
