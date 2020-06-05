@@ -1,9 +1,9 @@
 # Picinject
-With picinject you can simply hide files in pictures and extract them again when you need them
+With picinject you can simply hide files in pictures and extract them again when you need them.
 
 ### Installing PicInject
 First make sure that you have installed python3.
-Then type in Console ```python3 setup.py install```
+You can simply install picinject by typing ```python3 setup.py install``` in console.
 
 
 ### Using PicInject
