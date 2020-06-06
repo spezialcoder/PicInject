@@ -2,7 +2,7 @@ from setuptools import setup,find_packages
 
 setup(
     name="picinject",
-    version="0.1",
+    version="1.0",
     description="With picinject you can simply hide files in pictures and extract them again when you need them",
     install_requires=["colorama"],
     python_requires=">=3.6.*",
