@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse, sys, os, zipfile, base64, random, imghdr, os,webbrowser,shutil
 from colorama import Fore
-version = 0.1
+version = 1.0
 ##Exceptions
 class ObjectInitException(Exception):
     def __init__(self, reason):
