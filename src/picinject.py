@@ -1,4 +1,4 @@
-#/usr/bin/python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import argparse, sys, os, zipfile, base64, random, imghdr, os,webbrowser,shutil
 from colorama import Fore
